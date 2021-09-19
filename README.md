@@ -53,3 +53,189 @@ launch 는 Job 객체를, async 는 Deferred 객체를 반환 하며, 이 객체
     }
 
 ```
+### 코루틴 제어를 위한 주요 키워드
+- **launch , async**
+- **Job , Deferred**
+- **runBlocking**
+코루틴 블록 내에서 어떤 작업을 “어떻게 처리”하고 “어떠한 결과로 반환” 할것인가 하는 제어 에 관한 이야기를 다루려고 한다.
+즉, 코루틴 블록을 조합하여 동기 그리고 비동기 로 사용하는 방법이다.
+
+##### launch() — Job
+launch() 함수로 시작된 코루틴 블록은 Job 객체를 반환한다.
+
+```Kolin
+val job : Job = launch {
+    ...
+}
+```
+반환받은 Job 객체로 코루틴 블록을 취소하거나, 다음 작업의 수행전 코루틴 블록이 완료 되기를 기다릴수 있다.
+
+```Kolin
+        val job = launch {
+            var i = 0
+            while (i < 10) {
+                delay(500)
+                i++
+            }
+        }
+
+        job.join() // 완료 대기
+        job.cancel() // 취소
+```
+여러개의 launch 코루틴 블록을 실행할 경우 각각의 Job 객체에 대해서 join() 함수로 코루틴 블록이 완료 될때까지 다음 코드 수행을 대기할수 있다.
+```Kolin
+       val job1 : Job = launch {
+            var i = 0
+            while (i < 10) {
+                delay(500)
+                i++
+            }
+        }
+
+        val job2 = launch {
+            var i = 0
+            while (i < 10) {
+                delay(1000)
+                i++
+            }
+        }
+
+        job1.join()
+        job2.join()
+```
+모든 Job 객체에 대해서 일일히 join() 함수를 호출하지 않고 joinAll() 함수를 이용하여 모든 launch 코루틴 블록이 완료 되기를 기다릴수도 있다.
+```Kolin
+joinAll(job1, job2)
+```
+또는, 다음의 예시와 같이 첫번째 launch 코루틴 블록에서 반환받은 Job 객체를 두번째 launch() 함수의 인자로 사용하면, 동일한 Job 객체로 두개의 코루틴 블록을 모두 제어 할수 있다.
+```Kolin
+      val job1 = launch {
+            var i = 0
+            while (i < 10) {
+                delay(500)
+                i++
+            }
+        }
+
+        // 위 블록 과 같은 job1 객체를 사용
+        launch(job1) {
+            var i = 0
+            while (i < 10) {
+                delay(1000)
+                i++
+            }
+        }
+
+        // 같은 job 객체를 사용하게 되면
+        // joinAll(job1, job2) 와 같다
+        job1.join()
+```
+launch() 함수로 정의된 코루틴 블록은 즉시 수행되며, 반환 받은 Job 객체는 해당 블록을 제어는 할수 있지만 코루틴 블록의 결과를 반환하지는 않는다.
+코루틴 블록의 결과 값을 반환받고 싶다면 async() 코루틴 블록을 생성한다.
+##### async() — Deferred
+async() 함수로 시작된 코루틴 블록은 Deferred 객체를 반환한다.
+```Kolin
+val deferred : Deferred<T> = async {
+    ...
+    T // 결과값
+}
+```
+이렇게 시작된 코루틴 블록은 Deferred 객체를 이용해 제어가 가능하며 동시에 코루틴 블록에서 계산된 결과값을 반환 받을수 있다.
+```Kolin
+        val deferred : Deferred<String> = async {
+            var i = 0
+            while (i < 10) {
+                delay(500)
+                i++
+            }
+
+            "result"
+        }
+        
+        val msg = deferred.await()
+        println(msg) // result 출력
+```
+여러개의 async 코루틴 블록을 실행할 경우 각각의 Deferred 객체에 대해서 await() 함수로 코루틴 블록이 완료 될때까지 다음 코드 수행을 대기할수 있다. await() 함수는 코루틴 블록이 완료되면 결과를 반환한다.
+```Kolin
+        val deferred1 = async {
+            var i = 0
+            while (i < 10) {
+                delay(500)
+                i++
+            }
+
+            "result1"
+        }
+
+        val deferred2 = async {
+            var i = 0
+            while (i < 10) {
+                delay(1000)
+                i++
+            }
+
+            "result2"
+        }
+
+        val result1 = deferred1.await()
+        val result2 = deferred2.await()
+        
+        println("$result1 , $result2") // result1 , result 2 출력
+```
+각각의 Deferred 객체에 대해서 await() 함수를 호출하지 않고 awaitAll() 함수를 이용하여 모든 async 코루틴 블록이 완료 되기를 기다릴수도 있다.
+```Kolin
+awaitAll(deferred1, deferred2)
+```
+##### 지연실행
+launch 코루틴 블록 과 async 코루틴 블록은 모두 처리 시점을 뒤로 미룰수 있다.
+각 코루틴 블록 함수의 start 인자에 CoroutineStart.LAZY 를 사용하면 해당 코루틴 블록은 지연 되어 실행된다.
+```Kolin
+val job = launch (start = CoroutineStart.LAZY) {
+    ...
+}
+또는
+val deferred = async (start = CoroutineStart.LAZY) {
+    ...
+}
+```
+launch 코루틴 블록을 지연 실행 시킬 경우 Job 클래스 의 start() 함수 를 호출하거나 join() 함수를 호출하는 시점에 launch 코드 블록이 수행된다.
+```Kolin
+job.start()
+또는
+job.join()
+```
+##### runBlocking()
+runBlocking() 함수는 코드 블록이 작업을 완료 하기를 기다린다.
+```Kolin
+runBlocking {
+    ...
+}
+```
+### 코루틴 에서의 작업 취소
+코루틴의 완벽한 제어를 위해서는 작업을 기다리고, 완료된 작업의 결과를 반환 받아서 처리하는것 뿐만아니라 작업의 취소 까지도 처리할수 있어야 한다.
+제어에 사용 되는 Job 클래스 와 Deferred 클래스 에는 코루틴 블록의 작업을 취소하기 위한 cancel() 함수가 존재한다.
+
+다음은 500 밀리초 간격으로 특정 문자열을 1000회 출력하는 코루틴 블록이다. 이 블록을 시작한 이후 1300 밀리초가 지나면 코루틴을 취소한다.
+```Kolin
+fun cancellingCoroutineExecution() = runBlocking {
+    val job = launch {
+        repeat(1000) { i ->
+            println("job: I'm sleeping $i ...")
+            delay(500L)
+        }
+    }
+    
+    delay(1300L)
+    println("main: I'm tired of waiting!")
+    job.cancel()
+    job.join()
+    println("main: Now I can quit.")
+}
+```
+```Kolin
+job: I'm sleeping 0 ...
+job: I'm sleeping 1 ...
+job: I'm sleeping 2 ...
+main: I'm tired of waiting!
+main: Now I can quit.
+```
