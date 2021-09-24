@@ -131,7 +131,7 @@ CoroutineScope의 특별한 형태로, **앱이 실행될 때부터 앱이 종�
 ### 세 번째, CoroutineBuilder
 대망의 마지막, **CoroutineBuilder**입니다.
 
-**CoroutineBuilder의 본질**은 결국 **설정해준 Context와 Scope를 통해 Coroutine을 실행시켜주는 ‘함수’**입니다.
+**CoroutineBuilder의 본질은 결국 **설정해준 Context와 Scope를 통해 Coroutine을 실행시켜주는 ‘함수’** 입니다.
 
 미사일을 쏠 때 launch 버튼을 누르는 것과 같이 **launch(혹은 async)로 시작된 Coroutine은 내 손을 떠나 제 갈길을 가게 되죠.**
 
@@ -141,7 +141,7 @@ CoroutineScope의 특별한 형태로, **앱이 실행될 때부터 앱이 종�
 
 **특히 UI 작업을 관장하는 Main Thread에서 runBlocking을 사용하여 Thread를 장시간 점유하고 있을 경우 ANR (Application Not Responding)이 발생할 수 있습니다.**
 
-그렇다면 **launch**와 **async**의 차이는 무엇일까요?
+그렇다면 **launch 와 async** 의 차이는 무엇일까요?
 
 두 함수는 동일한 기능을 하지만 **다른 객체**를 반환합니다.
 
