@@ -131,7 +131,7 @@ CoroutineScope의 특별한 형태로, **앱이 실행될 때부터 앱이 종�
 ### 세 번째, CoroutineBuilder
 대망의 마지막, **CoroutineBuilder**입니다.
 
-**CoroutineBuilder의 본질은 결국 **설정해준 Context와 Scope를 통해 Coroutine을 실행시켜주는 ‘함수’** 입니다.
+**CoroutineBuilder**의 본질은 결국 **설정해준 Context와 Scope를 통해 Coroutine을 실행시켜주는 ‘함수’** 입니다.
 
 미사일을 쏠 때 launch 버튼을 누르는 것과 같이 **launch(혹은 async)로 시작된 Coroutine은 내 손을 떠나 제 갈길을 가게 되죠.**
 
